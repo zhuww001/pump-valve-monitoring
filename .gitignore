@@ -19,3 +19,8 @@ __pycache__/
 *.tmp
 *.temp
 *.swp
+venv/ 
+.venv/ 
+__pycache__/ 
+*.pyc 
+.DS_Store 
