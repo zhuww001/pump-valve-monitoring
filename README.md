@@ -1,181 +1,172 @@
 # 泵阀管道堵塞预警系统
 
-## 项目简介
+实时监测泵阀设备运行状态、预测管道堵塞风险，并提供历史数据查询与分析功能。
 
-本项目实现了一个基于时序数据异常检测的泵阀管道堵塞预警系统，适用于化工园区内输送泵、调节阀、工艺管道等关键输送节点的监测。系统通过对实时传感数据进行分析，提前识别堵塞隐患，输出预警信息并辅助处置，避免非计划停机、设备损坏及生产中断。
+---
 
-## 功能特性
+## 快速启动
 
-- **多设备支持**：可同时监控多个泵阀设备
-- **Web 界面**：提供直观的设备管理和数据可视化界面
-- **双模式数据采集**：支持真实传感接口和模拟接口
-- **智能异常检测**：基于LSTM模型和统计方法识别堵塞前兆
-- **分级预警**：支持一般预警和紧急预警两级提示
-- **SMS 通知**：预警时自动发送短信通知相关负责人
-- **历史数据查询**：支持近1小时、近24小时、近72小时及自由时间筛选
-- **预警数据管理**：查看设备的历史预警记录
-- **设备管理**：添加、编辑设备信息和联系方式
-- **本地存储**：所有数据存储在本地CSV文件，无需数据库
-- **参数可调**：支持预警阈值、采集频率、灵敏度在线微调
-- **低延迟响应**：数据接入至预警输出≤5秒
-- **高准确率**：常规工况下堵塞异常识别准确率≥90%
-
-## 目录结构
-
-```
-pump_valve_monitoring/
-├── src/                # 源代码
-│   ├── main.py         # 主监控脚本
-│   └── mock_api.py     # 模拟接口脚本
-├── config/             # 配置文件
-│   └── config.yaml     # 系统配置
-├── data/               # 数据存储
-├── logs/               # 日志存储
-├── models/             # 模型存储
-│   ├── lstm_detector.py        # LSTM异常检测器
-│   └── train_lstm_model.py     # 模型训练脚本
-├── templates/          # Web 界面模板
-│   ├── device_alerts.html      # 预警数据页面
-│   ├── device_detail.html      # 实时数据页面
-│   ├── device_edit.html        # 设备编辑页面
-│   ├── device_history.html     # 历史数据页面
-│   ├── device_list.html        # 设备列表页面
-│   └── index.html              # 首页
-├── tests/              # 测试脚本
-│   ├── test_monitor.py         # 功能测试
-│   ├── test_playwright.py      # Playwright 测试
-│   └── pumpvalvemonitoring_*.spec.ts  # 自动化测试
-├── app.py              # Web 服务器
-├── requirements.txt    # 依赖包
-└── README.md           # 项目说明
-```
-
-## 安装指南
-
-### 1. 环境要求
-
-- Python 3.9 及以上
-- Windows 或 MacOS 系统
-
-### 2. 安装依赖
+### 一键启动（本地开发模式）
 
 ```bash
-# 进入项目目录
-cd pump_valve_monitoring
-
-# 安装依赖
-pip install -r requirements.txt
+./start.sh
 ```
 
-### 3. 启动模拟接口
+启动后访问：
+
+| 服务 | 地址 |
+|------|------|
+| 主监控界面（Flask） | http://localhost:5001 |
+| 前端平台（Vue3） | http://localhost:5173 |
+| 后端 API（FastAPI） | http://localhost:8000 |
+| API 文档（Swagger） | http://localhost:8000/docs |
+| 边缘计算网关 | http://localhost:8001 |
+
+按 **Ctrl+C** 停止所有服务。
+
+### 启动选项
 
 ```bash
-# 启动模拟接口服务
-python src/mock_api.py
+./start.sh              # 默认：本地开发模式，启动所有服务
+./start.sh --docker     # Docker Compose 模式（需安装 Docker）
+./start.sh --simple     # 仅启动主监控服务（Flask，不含完整平台）
+./start.sh --no-edge    # 不启动边缘计算网关
+./start.sh --skip-install  # 跳过依赖安装（已安装过时使用）
+./start.sh --help       # 查看所有选项
 ```
 
-模拟接口默认运行在 `http://localhost:8000`，提供以下接口：
-- `GET /api/pump-data`：获取泵阀数据
-- `POST /api/set-mode`：设置运行模式（normal/blockage）
-
-### 4. 启动监控系统
+### Docker 部署
 
 ```bash
-# 启动监控系统
-python src/main.py
+./start.sh --docker
 ```
 
-### 5. 启动 Web 服务器
+启动后访问 http://localhost （前端）和 http://localhost:8000 （后端 API）。
+
+停止：
 
 ```bash
-# 启动 Web 服务器
-python app.py
+cd pump-data-platform && docker-compose down
 ```
 
-Web 服务器默认运行在 `http://localhost:5000`，可通过浏览器访问。
+---
 
-## 使用方法
+## 项目结构
 
-### 1. 访问 Web 界面
+```
+pump-valve-monitoring/
+├── start.sh                  # ★ 一键启动脚本
+├── app.py                    # 主监控服务（Flask，端口 5001）
+├── config/
+│   └── config.yaml           # 设备配置
+├── data/                     # 设备数据（CSV）
+├── logs/                     # 运行日志
+├── templates/                # Flask HTML 模板
+├── edge-gateway/             # 边缘计算网关（FastAPI，端口 8001）
+│   ├── main.py               # 网关服务
+│   ├── client.py             # 模拟客户端（测试用）
+│   └── requirements.txt
+└── pump-data-platform/       # 完整监控平台
+    ├── backend/              # 后端（FastAPI，端口 8000）
+    │   ├── main.py
+    │   ├── api/              # API 路由
+    │   ├── core/             # 核心模块（配置、数据采集、服务）
+    │   └── requirements.txt
+    ├── frontend/             # 前端（Vue3 + Vite，端口 5173）
+    │   ├── src/
+    │   │   ├── views/        # 页面组件
+    │   │   ├── router.js     # 路由配置
+    │   │   └── App.vue
+    │   ├── package.json
+    │   └── vite.config.js
+    ├── docker-compose.yml    # Docker 编排配置
+    ├── .env                  # 环境变量配置
+    └── start.sh              # 平台内部启动脚本
+```
 
-打开浏览器，访问 `http://localhost:5000`，即可看到设备列表页面。
+---
 
-### 2. 设备管理
+## 技术栈
 
-- **查看设备列表**：首页显示所有设备的基本信息
-- **编辑设备**：点击设备列表中的「编辑」按钮，修改设备信息和联系方式
-- **查看实时数据**：点击设备列表中的「实时数据」按钮，查看设备的实时运行状态
-- **查看历史数据**：点击设备列表中的「历史数据」按钮，查看设备的历史运行数据
-- **查看预警数据**：点击设备列表中的「预警数据」按钮，查看设备的历史预警记录
+| 层次 | 技术 |
+|------|------|
+| 主监控后端 | Python + Flask |
+| 完整平台后端 | FastAPI + Uvicorn |
+| 前端 | Vue3 + Element Plus + ECharts + Vite |
+| 边缘网关 | FastAPI + httpx |
+| 数据库（Docker 模式） | PostgreSQL + InfluxDB + Redis |
+| 容器化 | Docker Compose |
 
-### 3. 模式切换
+---
 
-- **正常工况**：`curl -X POST "http://localhost:8000/api/set-mode?mode=normal"`
-- **堵塞工况**：`curl -X POST "http://localhost:8000/api/set-mode?mode=blockage"`
+## 环境要求
 
-### 4. 历史数据查询
+- **Python 3.8+**（脚本自动创建 `.venv` 虚拟环境）
+- **Node.js 16+**（完整平台前端，`--simple` 模式不需要）
+- **Docker**（仅 `--docker` 模式需要）
 
-在历史数据页面，您可以：
-- 选择预设时间范围：近1小时、近24小时、近72小时
-- 自定义时间范围：选择开始和结束时间
-- 调整每页显示条数：10/30/50/100
+---
 
-### 5. 配置调整
+## 功能模块
 
-编辑 `config/config.yaml` 文件，根据实际需求调整以下参数：
+### 主监控服务（Flask）
 
-- **数据采集频率**：`data_collection.collection_interval`（秒）
-- **预警阈值**：`anomaly_detection.pressure_threshold` 和 `flow_threshold`（百分比）
-- **连续触发次数**：`anomaly_detection.consecutive_triggers`
-- **基准值计算窗口**：`data_preprocessing.baseline_window`（分钟）
-- **SMS 通知**：`notification.sms.enable` 和相关配置
-
-## 技术实现
-
-### 核心算法
-
-1. **数据预处理**：剔除缺失值、毛刺数据，保障时序数据连续性
-2. **基准值计算**：基于前30分钟正常工况数据计算平均值作为基准
-3. **异常检测**：
-   - 压力相对基准值持续上升≥15%
-   - 流量相对基准值持续下降≥20%
-   - 连续3个采集周期触发阈值，判定为堵塞前兆
-   - 基于LSTM模型和统计Z-score方法进行异常检测
-4. **预警生成**：根据连续触发次数生成一般或紧急预警
-5. **SMS 通知**：预警时通过配置的短信服务发送通知
-
-### 模拟接口
-
-模拟接口支持两种运行模式：
-- **正常工况**：压力和流量小幅波动
-- **堵塞工况**：压力逐渐上升，流量逐渐下降
-
-### Web 界面
-
-Web 界面使用 Flask 框架实现，包含以下功能：
-- 设备列表管理
-- 实时数据展示（带趋势图）
-- 历史数据查询（支持时间筛选和分页）
-- 预警数据管理
+- 设备列表与设备详情
+- 实时数据展示与历史数据查询
+- 预警记录管理
 - 设备信息编辑
+- 数据读取自 `data/` 目录 CSV 文件，无需数据库
+
+### 完整平台（pump-data-platform）
+
+- **实时监控**：设备状态实时展示与趋势图
+- **设备管理**：列表、搜索、跳转操作
+- **历史数据**：支持 1h/24h/72h 及自定义时间范围，图表 + 列表双视图，数据导出
+- **预警管理**：预警记录查询与状态管理
+- **配置中心**：系统配置与设备阈值管理
+
+### 边缘计算网关
+
+- 接收传感器数据并转发到主系统
+- 支持多设备数据聚合
+- 断网缓存与续传
+- 模拟上报接口（测试用）
+
+---
+
+## 日志
+
+服务日志写入 `logs/` 目录：
+
+```
+logs/
+├── flask.log          # 主监控服务日志
+├── backend.log        # 后端 API 日志
+├── frontend.log       # 前端开发服务日志
+└── edge-gateway.log   # 边缘网关日志
+```
+
+---
+
+## 数据说明
+
+**设备数据结构**：`device_id, name, location, manager, contact, status, timestamp, pressure, flow, temperature, source_type, gateway_id`
+
+**预警数据结构**：`warning_id, device_id, warning_type, message, timestamp, status`
+
+**默认预警阈值**（可在 `.env` 中修改）：
+
+| 指标 | 阈值 |
+|------|------|
+| 压力 | 2.0 |
+| 流量 | 5.0 |
+| 温度 | 80.0 |
+
+---
 
 ## 注意事项
 
-1. **测试前**：确认数据时序连续性，避免跳变、缺失数据导致模型误判
-2. **部署前**：结合厂区介质特性、管路工况微调预警阈值
-3. **正式上线**：必须对接DCS/PLC真实数据源，保证数据准确性
-4. **数据安全**：所有数据存储在本地，严禁拷贝、外泄厂区敏感传感数据
-5. **SMS 配置**：如需启用短信通知功能，请在配置文件中填写正确的短信服务提供商信息
-
-## 交付物
-
-- 泵阀管道堵塞预警系统源码
-- 模拟接口脚本
-- 配置文件模板
-- Web 界面
-- 测试脚本
-- 项目说明文档
-
-## 联系方式
-
-如有问题或建议，请联系项目维护人员。
+- 本地开发模式使用模拟数据，无需数据库
+- Docker 模式会自动启动 PostgreSQL、InfluxDB、Redis
+- 边缘网关通过环境变量 `MAIN_SYSTEM_URL` 配置主系统地址（默认 `http://localhost:8000`）
+- 修改 `.env` 文件可调整端口、数据库连接、预警阈值等配置

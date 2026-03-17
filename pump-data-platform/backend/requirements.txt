@@ -1,0 +1,23 @@
+# 后端依赖包清单
+
+# 核心框架
+fastapi>=0.100.0
+uvicorn>=0.23.0
+
+# 数据库
+psycopg2-binary>=2.9.9
+influxdb-client>=1.35.0
+redis>=5.0.1
+
+# 异步任务
+celery>=5.3.4
+
+# 工具库
+python-dotenv>=1.0.0
+pydantic>=2.4.2
+pydantic-settings>=2.0.3
+alembic>=1.12.1
+
+# 其他
+requests>=2.31.0
+websockets>=11.0.3

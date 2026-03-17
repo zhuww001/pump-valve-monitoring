@@ -205,4 +205,4 @@ def update_device():
         return jsonify({'success': False, 'message': f'保存失败: {str(e)}'})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5001)
